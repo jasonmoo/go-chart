@@ -156,7 +156,17 @@ func (xa XAxis) Render(r Renderer, canvasBox Box, ra Range, defaults Style, tick
 				tx = tx - tb.Width()>>1
 				ty = canvasBox.Bottom + DefaultXAxisMargin + tb.Height()
 			} else {
-				ty = canvasBox.Bottom + (2 * DefaultXAxisMargin)
+				// https://stackoverflow.com/questions/9971230/calculate-rotated-rectangle-size-from-known-bounding-box-coordinates
+				bx, by := float64(tb.Width()), float64(tb.Height())
+				t := -tickStyle.TextRotationDegrees // anticlockwise
+				w := (1 / (math.Pow(math.Cos(t), 2) - math.Pow(math.Sin(t), 2))) * (bx*math.Cos(t) - by*math.Sin(t))
+				h := (1 / (math.Pow(math.Cos(t), 2) - math.Pow(math.Sin(t), 2))) * (-bx*math.Sin(t) + by*math.Cos(t))
+				if tickStyle.TextRotationDegrees < 0 {
+					tx += int(w)
+				} else {
+					tx -= int(w)
+				}
+				ty = canvasBox.Bottom + DefaultXAxisMargin - int(h)
 			}
 			Draw.Text(r, t.Label, tx, ty, tickWithAxisStyle)
 			maxTextHeight = util.Math.MaxInt(maxTextHeight, tb.Height())
